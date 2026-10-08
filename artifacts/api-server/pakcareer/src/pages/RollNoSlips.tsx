@@ -1,0 +1,90 @@
+import React, { useState } from "react";
+import { Link } from "wouter";
+import { useListResults } from "@workspace/api-client-react";
+import { FileText, Search, Download, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
+
+export default function RollNoSlips() {
+  const [search, setSearch] = useState("");
+  
+  const { data: slips, isLoading } = useListResults({
+    type: "roll_no_slip",
+    search: search || undefined,
+    limit: 50
+  });
+
+  return (
+    <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="text-center mb-12">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+          <FileText className="h-8 w-8" />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
+          Download Roll No Slips
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Download admit cards and roll no slips for upcoming government jobs, university entrance exams, and recruitment tests.
+        </p>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl border shadow-sm mb-8 flex gap-2 max-w-2xl mx-auto">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Search organization or test name..." 
+            className="pl-10 h-12 border-0 bg-muted/30 focus-visible:ring-0"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="divide-y">
+            {Array(5).fill(0).map((_, i) => (
+              <div key={i} className="p-6 flex gap-4 animate-pulse">
+                <div className="flex-1 space-y-3">
+                  <div className="h-5 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : slips?.length === 0 ? (
+          <div className="p-12 text-center text-muted-foreground">
+            No roll no slips found matching your search.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 bg-muted/20">
+            {slips?.map(slip => (
+              <div key={slip.id} className="bg-white p-5 rounded-xl border shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col h-full group">
+                <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-primary">
+                  <Calendar className="h-4 w-4" />
+                  {format(new Date(slip.publishedAt), 'dd MMM yyyy')}
+                </div>
+                <h3 className="text-lg font-bold text-secondary mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  {slip.title}
+                </h3>
+                <p className="text-muted-foreground text-sm font-medium mb-5 line-clamp-1">
+                  {slip.organization}
+                </p>
+                <div className="mt-auto pt-4 border-t border-border/50">
+                  {slip.fileUrl && (
+                    <a href={slip.fileUrl} target="_blank" rel="noreferrer" className="block">
+                      <Button className="w-full font-semibold">
+                        <Download className="mr-2 h-4 w-4" /> Download Slip
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
