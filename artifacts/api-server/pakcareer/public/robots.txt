@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Private and utility pages should not appear in search results
+Disallow: /admin
+Disallow: /signin
+Disallow: /auth
+Disallow: /api
+Disallow: /login
+Disallow: /register
+
+Sitemap: /sitemap.xml
