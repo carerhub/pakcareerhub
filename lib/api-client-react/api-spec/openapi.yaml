@@ -1,0 +1,1917 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: PakCareerHub API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: jobs
+    description: Job listings
+  - name: departments
+    description: Departments
+  - name: cities
+    description: Cities
+  - name: categories
+    description: Categories
+  - name: results
+    description: Results and roll no slips
+  - name: admissions
+    description: Admissions
+  - name: blog
+    description: Blog posts
+  - name: mcqs
+    description: MCQ questions
+  - name: papers
+    description: Past papers
+  - name: settings
+    description: Site settings
+  - name: stats
+    description: Statistics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Stats ──────────────────────────────────────────────────────────────────
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Site-wide statistics
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteStats"
+
+  # ── Jobs ───────────────────────────────────────────────────────────────────
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List jobs with optional filters
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [government, private, all]
+        - name: cityId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: departmentId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: categoryId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+        - name: featured
+          in: query
+          schema:
+            type: boolean
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, published, draft, unpublished, archived, all]
+      responses:
+        "200":
+          description: Jobs list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/from-advertisement:
+    post:
+      operationId: createJobsFromAdvertisement
+      tags: [jobs]
+      summary: Extract advertisement text and create reviewable draft jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobAdvertisementInput"
+      responses:
+        "201":
+          description: Draft jobs created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAdvertisementDraftResponse"
+        "422":
+          description: Advertisement could not be processed
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestAdvertisementUploadUrl
+      tags: [jobs]
+      summary: Request a protected advertisement upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvertisementUploadInput"
+      responses:
+        "200":
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdvertisementUploadResponse"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Departments ───────────────────────────────────────────────────────────
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [departments]
+      summary: List all departments
+      responses:
+        "200":
+          description: Departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+    post:
+      operationId: createDepartment
+      tags: [departments]
+      summary: Create a department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+
+  /departments/{id}:
+    patch:
+      operationId: updateDepartment
+      tags: [departments]
+      summary: Update a department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    delete:
+      operationId: deleteDepartment
+      tags: [departments]
+      summary: Delete a department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Cities ────────────────────────────────────────────────────────────────
+  /cities:
+    get:
+      operationId: listCities
+      tags: [cities]
+      summary: List all cities
+      responses:
+        "200":
+          description: Cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+    post:
+      operationId: createCity
+      tags: [cities]
+      summary: Create a city
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CityInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+
+  /cities/{id}:
+    patch:
+      operationId: updateCity
+      tags: [cities]
+      summary: Update a city
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CityUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+    delete:
+      operationId: deleteCity
+      tags: [cities]
+      summary: Delete a city
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Categories ────────────────────────────────────────────────────────────
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Results / Roll No Slips ───────────────────────────────────────────────
+  /results:
+    get:
+      operationId: listResults
+      tags: [results]
+      summary: List results and roll no slips
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [result, roll_no_slip, all]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Results list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Result"
+    post:
+      operationId: createResult
+      tags: [results]
+      summary: Create a result/roll no slip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResultInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Result"
+
+  /results/{id}:
+    patch:
+      operationId: updateResult
+      tags: [results]
+      summary: Update a result
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResultUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Result"
+    delete:
+      operationId: deleteResult
+      tags: [results]
+      summary: Delete a result
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Admissions ────────────────────────────────────────────────────────────
+  /admissions:
+    get:
+      operationId: listAdmissions
+      tags: [admissions]
+      summary: List admissions
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Admissions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Admission"
+    post:
+      operationId: createAdmission
+      tags: [admissions]
+      summary: Create an admission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdmissionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Admission"
+
+  /admissions/{id}:
+    patch:
+      operationId: updateAdmission
+      tags: [admissions]
+      summary: Update an admission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdmissionUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Admission"
+    delete:
+      operationId: deleteAdmission
+      tags: [admissions]
+      summary: Delete an admission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Blog ──────────────────────────────────────────────────────────────────
+  /blog:
+    get:
+      operationId: listBlogPosts
+      tags: [blog]
+      summary: List blog posts
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Blog posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogPost"
+    post:
+      operationId: createBlogPost
+      tags: [blog]
+      summary: Create a blog post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogPostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+
+  /blog/{id}:
+    get:
+      operationId: getBlogPost
+      tags: [blog]
+      summary: Get a blog post by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateBlogPost
+      tags: [blog]
+      summary: Update a blog post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogPostUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+    delete:
+      operationId: deleteBlogPost
+      tags: [blog]
+      summary: Delete a blog post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── MCQs ──────────────────────────────────────────────────────────────────
+  /mcqs:
+    get:
+      operationId: listMcqs
+      tags: [mcqs]
+      summary: List MCQs with optional filters
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [easy, medium, hard]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: MCQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mcq"
+    post:
+      operationId: createMcq
+      tags: [mcqs]
+      summary: Create an MCQ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/McqInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mcq"
+
+  /mcqs/{id}:
+    patch:
+      operationId: updateMcq
+      tags: [mcqs]
+      summary: Update an MCQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/McqUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mcq"
+    delete:
+      operationId: deleteMcq
+      tags: [mcqs]
+      summary: Delete an MCQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Papers ────────────────────────────────────────────────────────────────
+  /papers:
+    get:
+      operationId: listPapers
+      tags: [papers]
+      summary: List past papers
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Papers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Paper"
+    post:
+      operationId: createPaper
+      tags: [papers]
+      summary: Create a past paper
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Paper"
+
+  /papers/{id}:
+    patch:
+      operationId: updatePaper
+      tags: [papers]
+      summary: Update a paper
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Paper"
+    delete:
+      operationId: deletePaper
+      tags: [papers]
+      summary: Delete a paper
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Settings ──────────────────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: listSettings
+      tags: [settings]
+      summary: Get all site settings
+      responses:
+        "200":
+          description: Settings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Setting"
+    put:
+      operationId: upsertSettings
+      tags: [settings]
+      summary: Upsert site settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Setting"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    SiteStats:
+      type: object
+      properties:
+        totalJobs:
+          type: number
+        totalDepartments:
+          type: number
+        totalCities:
+          type: number
+        totalCompanies:
+          type: number
+        governmentJobs:
+          type: number
+        privateJobs:
+          type: number
+        latestJobsCount:
+          type: number
+      required:
+        - totalJobs
+        - totalDepartments
+        - totalCities
+        - totalCompanies
+        - governmentJobs
+        - privateJobs
+        - latestJobsCount
+
+    # ── Jobs ────────────────────────────────────────────────────────────────
+    Job:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        organization:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        cityId:
+          type: ["integer", "null"]
+        cityName:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        categoryName:
+          type: ["string", "null"]
+        jobType:
+          type: string
+          enum: [government, private]
+        employmentType:
+          type: string
+          enum: [full_time, part_time, contract]
+        description:
+          type: ["string", "null"]
+        requirements:
+          type: ["string", "null"]
+        howToApply:
+          type: ["string", "null"]
+        applyUrl:
+          type: ["string", "null"]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        salaryPackage:
+          type: ["string", "null"]
+        ageMin:
+          type: ["integer", "null"]
+        ageMax:
+          type: ["integer", "null"]
+        vacancies:
+          type: ["integer", "null"]
+        postName:
+          type: ["string", "null"]
+        bps:
+          type: ["string", "null"]
+        qualification:
+          type: ["string", "null"]
+        education:
+          type: ["string", "null"]
+        experience:
+          type: ["string", "null"]
+        gender:
+          type: ["string", "null"]
+        domicile:
+          type: ["string", "null"]
+        quota:
+          type: ["string", "null"]
+        province:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        applicationFee:
+          type: ["string", "null"]
+        applicationStartDate:
+          type: ["string", "null"]
+        requiredDocuments:
+          type: ["string", "null"]
+        advertisementNumber:
+          type: ["string", "null"]
+        referenceNumber:
+          type: ["string", "null"]
+        contactInformation:
+          type: ["string", "null"]
+        importantInstructions:
+          type: ["string", "null"]
+        termsConditions:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+        isFeatured:
+          type: boolean
+        logoUrl:
+          type: ["string", "null"]
+        advertisementPath:
+          type: ["string", "null"]
+        advertisementUrl:
+          type: ["string", "null"]
+        advertisementName:
+          type: ["string", "null"]
+        advertisementMimeType:
+          type: ["string", "null"]
+        advertisementSize:
+          type: ["integer", "null"]
+        extractedText:
+          type: ["string", "null"]
+        extractionStatus:
+          type: string
+          enum: [not_started, processing, completed, failed]
+        verificationStatus:
+          type: string
+          enum: [needs_review, reviewed]
+        status:
+          type: string
+          enum: [draft, active, published, unpublished, archived]
+        expiresAt:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - title
+        - organization
+        - jobType
+        - employmentType
+        - isFeatured
+        - status
+        - expiresAt
+        - createdAt
+        - updatedAt
+
+    JobListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: number
+      required:
+        - jobs
+        - total
+
+    JobInput:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        cityId:
+          type: ["integer", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        jobType:
+          type: string
+          enum: [government, private]
+        employmentType:
+          type: string
+          enum: [full_time, part_time, contract]
+        description:
+          type: string
+        requirements:
+          type: string
+        howToApply:
+          type: string
+        applyUrl:
+          type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        salaryPackage:
+          type: string
+        ageMin:
+          type: ["integer", "null"]
+        ageMax:
+          type: ["integer", "null"]
+        vacancies:
+          type: integer
+        postName:
+          type: string
+        bps:
+          type: string
+        qualification:
+          type: string
+        education:
+          type: string
+        experience:
+          type: string
+        gender:
+          type: string
+        domicile:
+          type: string
+        quota:
+          type: string
+        province:
+          type: string
+        location:
+          type: string
+        applicationFee:
+          type: string
+        applicationStartDate:
+          type: string
+        requiredDocuments:
+          type: string
+        advertisementNumber:
+          type: string
+        referenceNumber:
+          type: string
+        contactInformation:
+          type: string
+        importantInstructions:
+          type: string
+        termsConditions:
+          type: string
+        deadline:
+          type: string
+        isFeatured:
+          type: boolean
+        logoUrl:
+          type: string
+        advertisementPath:
+          type: string
+        advertisementName:
+          type: string
+        advertisementMimeType:
+          type: string
+        advertisementSize:
+          type: integer
+        extractedText:
+          type: string
+        extractionStatus:
+          type: string
+          enum: [not_started, processing, completed, failed]
+        verificationStatus:
+          type: string
+          enum: [needs_review, reviewed]
+      required:
+        - title
+        - organization
+        - jobType
+        - employmentType
+
+    JobUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        cityId:
+          type: ["integer", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        jobType:
+          type: string
+          enum: [government, private]
+        employmentType:
+          type: string
+          enum: [full_time, part_time, contract]
+        description:
+          type: string
+        requirements:
+          type: string
+        howToApply:
+          type: string
+        applyUrl:
+          type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        salaryPackage:
+          type: string
+        ageMin:
+          type: ["integer", "null"]
+        ageMax:
+          type: ["integer", "null"]
+        vacancies:
+          type: integer
+        postName:
+          type: string
+        bps:
+          type: string
+        qualification:
+          type: string
+        education:
+          type: string
+        experience:
+          type: string
+        gender:
+          type: string
+        domicile:
+          type: string
+        quota:
+          type: string
+        province:
+          type: string
+        location:
+          type: string
+        applicationFee:
+          type: string
+        applicationStartDate:
+          type: string
+        requiredDocuments:
+          type: string
+        advertisementNumber:
+          type: string
+        referenceNumber:
+          type: string
+        contactInformation:
+          type: string
+        importantInstructions:
+          type: string
+        termsConditions:
+          type: string
+        deadline:
+          type: string
+        isFeatured:
+          type: boolean
+        logoUrl:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, published, unpublished, archived]
+        expiresAt:
+          type: string
+        advertisementPath:
+          type: string
+        advertisementName:
+          type: string
+        advertisementMimeType:
+          type: string
+        advertisementSize:
+          type: integer
+        extractedText:
+          type: string
+        extractionStatus:
+          type: string
+          enum: [not_started, processing, completed, failed]
+        verificationStatus:
+          type: string
+          enum: [needs_review, reviewed]
+
+    JobAdvertisementInput:
+      type: object
+      properties:
+        objectPath:
+          type: string
+        fileName:
+          type: string
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, image/jpg, application/pdf]
+        size:
+          type: integer
+      required: [objectPath, fileName, contentType, size]
+
+    JobAdvertisementDraftResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        extractedText:
+          type: string
+        extractionStatus:
+          type: string
+          enum: [completed, failed]
+      required: [jobs, extractedText, extractionStatus]
+
+    AdvertisementUploadInput:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, image/jpg, application/pdf]
+      required: [name, size, contentType]
+
+    AdvertisementUploadResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+      required: [uploadURL, objectPath]
+
+    # ── Departments ──────────────────────────────────────────────────────────
+    Department:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: ["string", "null"]
+        jobCount:
+          type: number
+      required:
+        - id
+        - name
+        - slug
+        - jobCount
+
+    DepartmentInput:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: string
+      required:
+        - name
+        - slug
+
+    DepartmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: string
+
+    # ── Cities ───────────────────────────────────────────────────────────────
+    City:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        jobCount:
+          type: number
+      required:
+        - id
+        - name
+        - slug
+        - jobCount
+
+    CityInput:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+      required:
+        - name
+        - slug
+
+    CityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+
+    # ── Categories ───────────────────────────────────────────────────────────
+    Category:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: ["string", "null"]
+        jobCount:
+          type: number
+      required:
+        - id
+        - name
+        - slug
+        - jobCount
+
+    CategoryInput:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: string
+      required:
+        - name
+        - slug
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        iconUrl:
+          type: string
+
+    # ── Results ───────────────────────────────────────────────────────────────
+    Result:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        organization:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [result, roll_no_slip]
+        fileUrl:
+          type: ["string", "null"]
+        publishedAt:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - organization
+        - type
+        - publishedAt
+        - createdAt
+
+    ResultInput:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [result, roll_no_slip]
+        fileUrl:
+          type: string
+        publishedAt:
+          type: string
+      required:
+        - title
+        - organization
+        - type
+        - publishedAt
+
+    ResultUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [result, roll_no_slip]
+        fileUrl:
+          type: string
+        publishedAt:
+          type: string
+
+    # ── Admissions ────────────────────────────────────────────────────────────
+    Admission:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        institution:
+          type: string
+        description:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+        applyUrl:
+          type: ["string", "null"]
+        isScholarship:
+          type: boolean
+        logoUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - institution
+        - isScholarship
+        - createdAt
+
+    AdmissionInput:
+      type: object
+      properties:
+        title:
+          type: string
+        institution:
+          type: string
+        description:
+          type: string
+        deadline:
+          type: string
+        applyUrl:
+          type: string
+        isScholarship:
+          type: boolean
+        logoUrl:
+          type: string
+      required:
+        - title
+        - institution
+        - isScholarship
+
+    AdmissionUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        institution:
+          type: string
+        description:
+          type: string
+        deadline:
+          type: string
+        applyUrl:
+          type: string
+        isScholarship:
+          type: boolean
+        logoUrl:
+          type: string
+
+    # ── Blog ──────────────────────────────────────────────────────────────────
+    BlogPost:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: ["string", "null"]
+        content:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        category:
+          type: string
+        author:
+          type: string
+        publishedAt:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - slug
+        - content
+        - category
+        - author
+        - publishedAt
+        - createdAt
+
+    BlogPostInput:
+      type: object
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        imageUrl:
+          type: string
+        category:
+          type: string
+        author:
+          type: string
+        publishedAt:
+          type: string
+      required:
+        - title
+        - slug
+        - content
+        - category
+        - author
+        - publishedAt
+
+    BlogPostUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        imageUrl:
+          type: string
+        category:
+          type: string
+        author:
+          type: string
+        publishedAt:
+          type: string
+
+    # ── MCQs ──────────────────────────────────────────────────────────────────
+    Mcq:
+      type: object
+      properties:
+        id:
+          type: number
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+        explanation:
+          type: ["string", "null"]
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        createdAt:
+          type: string
+      required:
+        - id
+        - question
+        - optionA
+        - optionB
+        - optionC
+        - optionD
+        - correctAnswer
+        - category
+        - difficulty
+        - createdAt
+
+    McqInput:
+      type: object
+      properties:
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+        explanation:
+          type: string
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+      required:
+        - question
+        - optionA
+        - optionB
+        - optionC
+        - optionD
+        - correctAnswer
+        - category
+        - difficulty
+
+    McqUpdate:
+      type: object
+      properties:
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+        explanation:
+          type: string
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+
+    # ── Papers ────────────────────────────────────────────────────────────────
+    Paper:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        organization:
+          type: string
+        subject:
+          type: string
+        year:
+          type: ["integer", "null"]
+        category:
+          type: string
+        fileUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - organization
+        - subject
+        - category
+        - createdAt
+
+    PaperInput:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        subject:
+          type: string
+        year:
+          type: number
+        category:
+          type: string
+        fileUrl:
+          type: string
+      required:
+        - title
+        - organization
+        - subject
+        - category
+
+    PaperUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        organization:
+          type: string
+        subject:
+          type: string
+        year:
+          type: number
+        category:
+          type: string
+        fileUrl:
+          type: string
+
+    # ── Settings ──────────────────────────────────────────────────────────────
+    Setting:
+      type: object
+      properties:
+        id:
+          type: number
+        key:
+          type: string
+        value:
+          type: string
+        label:
+          type: ["string", "null"]
+      required:
+        - id
+        - key
+        - value
+
+    SettingInput:
+      type: object
+      properties:
+        settings:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                type: string
+              label:
+                type: string
+            required:
+              - key
+              - value
+      required:
+        - settings
